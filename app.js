@@ -1,39 +1,20 @@
+require('dotenv').config();
 const express = require('express');
 const body = require('body-parser');
 const ejs = require('ejs');
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
-const _ = require('lodash')
+const _ = require('lodash');
 
 const app = express();
 
-mongoose.connect("mongodb+srv://admin:Love7534@cluster0.cokfbhy.mongodb.net/todolistDB", { useNewUrlParser: true });
-
-// var values = ["Buy Food","Cool Food","Eat Food"];
-// var workarr = [];
+mongoose.connect(process.env.STRING, { useNewUrlParser: true });
 
 const valuesSchema = new mongoose.Schema({
     name: String
 });
 
 const Value = mongoose.model("Value", valuesSchema);
-
-const value1 = new Value
-    ({
-        name: "Welcome to your todolist"
-    });
-
-const value2 = new Value
-    ({
-        name: "Hit + to add new item"
-    });
-
-const value3 = new Value
-    ({
-        name: "<-- Hit to delete a item"
-    });
-
-const defaultArray = [value1, value2, value3];
 
 const listSchema =
     ({
@@ -51,16 +32,6 @@ app.set('view engine', 'ejs');
 
 app.get('/', (req, res) => {
     Value.find({}).then(function (found) {
-        if (found.length === 0) {
-            Value.insertMany(defaultArray).then(function () {
-                console.log("Successfully saved defult items to DB");
-            })
-                .catch(function (err) {
-                    console.log(err);
-                });;
-            res.redirect('/');
-        }
-        else
             res.render('list', { listvalue: "Today", itemvalues: found })
     });
 })
@@ -72,14 +43,28 @@ app.post('/', (req, res) => {
         name: x
     });
     if (btn === "Today") {
-        item.save();
-        res.redirect('/');
+        item.save().then(()=>{
+            res.redirect('/');
+        })  
     }
     else {
         List.findOne({ name: btn }).then((data) => {
-            data.item.push(item)
-            data.save();
-            res.redirect("/" + btn);
+            if(!data)
+            {
+                const first = new List({
+                    name : btn,
+                    item : item
+                })
+                first.save().then(()=>{
+                    res.redirect("/" + btn);
+                });
+            }
+            else{
+                data.item.push(item)
+                data.save().then(()=>{
+                res.redirect("/" + btn);
+            });
+            }
         });
     }
 });
@@ -103,7 +88,7 @@ app.post('/delete', (req, res) => {
             })
             .catch(function (err) {
                 console.log(err);
-            });;
+            });
         res.redirect("/" + listName);
     }
 })
@@ -112,19 +97,10 @@ app.get('/:postName', (req, res) => {
     const postName = _.capitalize(req.params.postName);
 
     List.findOne({ name: postName }).then((data) => {
-        if (!data) {
-            const list = new List
-                ({
-                    name: postName,
-                    item: defaultArray
-                })
-            list.save();
-            console.log("Successfully added list");
-            res.redirect('/' + postName);
-        }
-        else {
-            res.render('list', { listvalue: postName, itemvalues: data.item });
-        }
+        if(!data)
+        res.render('list', {listvalue : postName , itemvalues: ""})
+        else
+            res.render('list', { listvalue: postName, itemvalues: data.item});
     });
 
 });

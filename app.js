@@ -74,7 +74,7 @@ app.post('/delete', (req, res) => {
     const listName = req.body.listName;
     if (listName === "Today") {
         Value.findByIdAndDelete({ _id: check }).then(function () {
-            console.log("Successfully delete defult items to DB");
+            console.log("Successfully delete deafult items to DB");
         })
             .catch(function (err) {
                 console.log(err);

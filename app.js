@@ -1,4 +1,5 @@
 require('dotenv').config();
+const { MongoClient } = require('mongodb');
 const express = require('express');
 const body = require('body-parser');
 const ejs = require('ejs');
@@ -7,8 +8,18 @@ const bodyParser = require('body-parser');
 const _ = require('lodash');
 
 const app = express();
+const PORT = process.env.PORT || 3000
 
-mongoose.connect(process.env.STRING, { useNewUrlParser: true });
+
+const connectDB = async () => {
+    try {
+      const conn = await mongoose.connect(process.env.STRING);
+      console.log(`MongoDB Connected: ${conn.connection.host}`);
+    } catch (error) {
+      console.log(error);
+      process.exit(1);
+    }
+  }
 
 const valuesSchema = new mongoose.Schema({
     name: String
@@ -105,6 +116,8 @@ app.get('/:postName', (req, res) => {
 
 });
 
-app.listen(process.env.PORT || 3000, () => {
-    console.log('Server is running live on port');
+connectDB().then(() => {
+    app.listen(PORT, () => {
+        console.log("listening for requests");
+    })
 })
